@@ -5,9 +5,12 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
-
 #include <boost/property_tree/ptree.hpp>
+
 #include "GConfig.hpp"
+
+NS_G4Y_BEGIN
+
 class GScene;
 class GPhyWorld;
 class GOpenGLView;
@@ -49,5 +52,7 @@ private:
     std::shared_ptr<GResourceMgr>          m_resource_mgr;
 	std::filesystem::path                  m_assets_path;
 };
+
+NS_G4Y_END
 
 #endif

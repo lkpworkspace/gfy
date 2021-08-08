@@ -4,8 +4,9 @@
 #include <memory>
 #include <vector>
 #include <glm/glm.hpp>
+
 #include "GConfig.hpp"
-class GObj;
+
 class btCollisionObject;
 class btRigidBody;
 class btDefaultCollisionConfiguration;
@@ -13,6 +14,12 @@ class btCollisionDispatcher;
 class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btDiscreteDynamicsWorld;
+
+NS_G4Y_BEGIN
+
+class GObj;
+class GPhyObj;
+class GPhyDebugDraw;
 class G4Y_DLL GRayHit
 {
 public:
@@ -23,26 +30,14 @@ public:
 class G4Y_DLL GPhyWorld final
 {
 public:
+	~GPhyWorld();
+
     void Init();
 
-    template<typename T>
-    void AddCollisionObj(std::shared_ptr<T> co){
-        auto o = std::dynamic_pointer_cast<btCollisionObject>(co);
-        if(o){
-            m_dynamics_world->addCollisionObject(o.get());
-        }
-    }
+	void DebugDraw(glm::mat4& mvp);
 
-    template<typename T>
-    void DelCollisionObj(std::shared_ptr<T> co){
-        auto o = std::dynamic_pointer_cast<btCollisionObject>(co);
-        if(o){
-            m_dynamics_world->removeCollisionObject(o.get());
-        }
-    }
-
-	void AddRigiBody(btRigidBody* rb);
-	void DelRigiBody(btRigidBody* rb);
+	void AddPhyObj(GPhyObj* col_obj);
+	void DelPhyObj(GPhyObj* col_obj);
 
     bool RayTest(glm::vec3 from, glm::vec3 to, GRayHit& hit);
 
@@ -51,6 +46,8 @@ public:
 	void PreSimulate();
 
 	void PostSimulate();
+
+	void RemoveCol(GPhyObj* col);
 // private:
     std::shared_ptr<btDefaultCollisionConfiguration>        m_collision_cfg;
     std::shared_ptr<btCollisionDispatcher>                  m_collision_dispatcher;
@@ -58,7 +55,12 @@ public:
     std::shared_ptr<btSequentialImpulseConstraintSolver>    m_solver;
     std::shared_ptr<btDiscreteDynamicsWorld>                m_dynamics_world;
 
-    std::vector<btCollisionObject*>                         m_all_col_objs;
+    std::vector<GPhyObj*>                         m_all_col_objs;
+	std::vector<GPhyObj*>                         m_remove_col_objs;
+
+	std::shared_ptr<GPhyDebugDraw>                          m_debug_draw;
 };
+
+NS_G4Y_END
 
 #endif

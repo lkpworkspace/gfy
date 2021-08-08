@@ -50,4 +50,9 @@
 #endif
 #endif
 
+#define NS_G4Y_BEGIN      namespace g4y {
+#define NS_G4Y_END        }
+#define USING_NS_G4Y      using namespace g4y
+#define NS_G4Y            ::g4y
+
 #endif

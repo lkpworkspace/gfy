@@ -1,23 +1,25 @@
-#include "GTexture.hpp"
-#include "GResourceMgr.h"
 #include <iostream>
 #include <GL/glew.h>
-#include "GObj.h"
-#include "GScene.h"
-#include "GCamera.h"
-#include "GTransform.h"
-#include "GOpenGLView.h"
-#include "GWorld.h"
+
+#include "GTexture.hpp"
+#include "GResourceMgr.hpp"
+#include "GObj.hpp"
+#include "GScene.hpp"
+#include "GCamera.hpp"
+#include "GTransform.hpp"
+#include "GOpenGLView.hpp"
+#include "GWorld.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+NS_G4Y_BEGIN
 
 GTexture::GTexture() :
     m_vaild(false)
 {
 
 }
-
 
 bool GTexture::LoadTextureFromFile(std::string filepath)
 {
@@ -57,3 +59,5 @@ bool GTexture::LoadTextureFromFile(std::string filepath)
 
     return m_vaild;
 }
+
+NS_G4Y_END

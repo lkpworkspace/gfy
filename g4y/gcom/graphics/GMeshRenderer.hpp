@@ -2,7 +2,10 @@
 #define __GMESHRENDERER_HPP__
 #include <string>
 #include <vector>
-#include "GCom.h"
+
+#include "GCom.hpp"
+
+NS_G4Y_BEGIN
 
 class GMesh;
 class GMaterial;
@@ -23,5 +26,7 @@ public:
     std::weak_ptr<GTransform> m_transform;
     std::weak_ptr<GCamera> m_camera;
 };
+
+NS_G4Y_END
 
 #endif

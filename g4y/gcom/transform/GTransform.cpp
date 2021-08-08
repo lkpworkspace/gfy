@@ -1,5 +1,7 @@
-#include "GTransform.h"
-#include "GObj.h"
+#include "GTransform.hpp"
+#include "GObj.hpp"
+
+NS_G4Y_BEGIN
 
 GTransform::Transform::Transform()
 : pos(glm::vec3(0,0,0))
@@ -60,6 +62,7 @@ GTransform::~GTransform()
 void GTransform::SetPosition(glm::vec3 pos)
 {
     wld_trans.pos = pos;
+	m_position_changed_sig(pos.x, pos.y, pos.z);
     UpdateTransform(Obj(), true);
 }
 
@@ -78,15 +81,19 @@ void GTransform::SetScale(glm::vec3 s)
 void GTransform::SetRotation(glm::vec3 eulers)
 {
     auto rot = glm::quat(glm::vec3(0,0,0));
+	// RPY
+	// PITCH: x, YAW: y, ROLL: z
     rot = glm::rotate(rot, glm::radians(eulers.y), glm::vec3(0, 1, 0));
     rot = glm::rotate(rot, glm::radians(eulers.x), glm::vec3(1, 0, 0));
     rot = glm::rotate(rot, glm::radians(eulers.z), glm::vec3(0, 0, 1));
+
     SetRotation(rot);
 }
 
 void GTransform::SetRotation(glm::quat q)
 {
     wld_trans.rot = q;
+	m_rotation_changed_sig(q.x, q.y, q.z, q.w);
     UpdateTransform(Obj(), true);
 }
 
@@ -186,7 +193,7 @@ glm::vec3 GTransform::Scale()
     return local_trans.scale;
 }
 
-void GTransform::SetLocalPostion(glm::vec3 pos)
+void GTransform::SetLocalPosition(glm::vec3 pos)
 {
     bool parent_valid = (Parent() == nullptr) ? false : true;
     if(!parent_valid){
@@ -195,6 +202,9 @@ void GTransform::SetLocalPostion(glm::vec3 pos)
     }
     local_trans.pos = pos;
     UpdateGlobalTransform(Obj());
+
+	auto wpos = wld_trans.pos;
+	m_position_changed_sig(wpos.x, wpos.y, wpos.z);
 }
 void GTransform::SetLocalRotation(glm::vec3 eulers)
 {
@@ -213,6 +223,9 @@ void GTransform::SetLocalRotation(glm::quat q)
     }
     local_trans.rot = q;
     UpdateGlobalTransform(Obj());
+
+	auto wrot = wld_trans.rot;
+	m_rotation_changed_sig(wrot.x, wrot.y, wrot.z, wrot.w);
 }
 
 glm::mat4 GTransform::ToMat4()
@@ -226,6 +239,13 @@ void GTransform::Start()
     if(parent){
         m_parent_trans = parent->GetCom<GTransform>();
     }
+	
+	auto wrot = wld_trans.rot;
+	m_rotation_changed_sig(wrot.x, wrot.y, wrot.z, wrot.w);
+	
+	auto wpos = wld_trans.pos;
+	m_position_changed_sig(wpos.x, wpos.y, wpos.z);
+
     UpdateTransform(Obj(), true);
 }
 
@@ -279,6 +299,16 @@ void GTransform::UpdateGlobalTransform(std::shared_ptr<GObj> obj)
     UpdateTransform(Obj(), false);
 }
 
+boost::signals2::connection GTransform::connect(const position_changed_sig_t::slot_type &subscriber)
+{
+	return m_position_changed_sig.connect(subscriber);
+}
+
+boost::signals2::connection GTransform::connect(const rotation_changed_sig_t::slot_type &subscriber)
+{
+	return m_rotation_changed_sig.connect(subscriber);
+}
+
 // void GTransform::Update()
 // {
 //     if(!m_parent_trans.expired()){
@@ -310,7 +340,104 @@ void GTransform::UpdateGlobalTransform(std::shared_ptr<GObj> obj)
 //     }
 // }
 
+GTransformWarp::GTransformWarp() {
+	std::cout << "transform warp construct1" << std::endl;
+	m_com = std::make_shared<GTransform>();
+}
 
+GTransformWarp::GTransformWarp(std::shared_ptr<GTransform> t) {
+	std::cout << "transform warp construct2" << std::endl;
+	m_com = t;
+}
+
+GTransformWarp::GTransformWarp(const GTransformWarp& o) {
+	std::cout << "transform warp construct3" << std::endl;
+	operator=(o);
+}
+
+GTransformWarp& GTransformWarp::operator=(const GTransformWarp& o) {
+	std::cout << "transform warp construct4" << std::endl;
+	m_com = o.m_com;
+	return *this;
+}
+
+GTransformWarp::~GTransformWarp()
+{
+	std::cout << "deconstruct GTransformWarp" << std::endl;
+}
+
+void GTransformWarp::setPosition(boost::python::object o) {
+	float x = boost::python::extract<float>(o[0]);
+	float y = boost::python::extract<float>(o[1]);
+	float z = boost::python::extract<float>(o[2]);
+	get<GTransform>()->SetPosition(glm::vec3(x, y, z));
+}
+
+boost::python::object GTransformWarp::getPosition() {
+	auto pos = get<GTransform>()->Position();
+	return boost::python::make_tuple(pos.x, pos.y, pos.z);
+}
+
+void GTransformWarp::setEulerAngles(boost::python::object o) {
+	float x = boost::python::extract<float>(o[0]);
+	float y = boost::python::extract<float>(o[1]);
+	float z = boost::python::extract<float>(o[2]);
+	get<GTransform>()->SetRotation(glm::vec3(x, y, z));
+}
+
+boost::python::object GTransformWarp::getEulerAngles() {
+	auto pos = get<GTransform>()->EulerAngles();
+	return boost::python::make_tuple(pos.x, pos.y, pos.z);
+}
+
+void GTransformWarp::setScale(boost::python::object o) {
+	float x = boost::python::extract<float>(o[0]);
+	float y = boost::python::extract<float>(o[1]);
+	float z = boost::python::extract<float>(o[2]);
+	get<GTransform>()->SetScale(glm::vec3(x, y, z));
+}
+
+boost::python::object GTransformWarp::getScale() {
+	auto pos = get<GTransform>()->Scale();
+	return boost::python::make_tuple(pos.x, pos.y, pos.z);
+}
+
+boost::python::object GTransformWarp::getForward() {
+	auto pos = get<GTransform>()->Forward();
+	return boost::python::make_tuple(pos.x, pos.y, pos.z);
+}
+
+boost::python::object GTransformWarp::getRight() {
+	auto pos = get<GTransform>()->Right();
+	return boost::python::make_tuple(pos.x, pos.y, pos.z);
+}
+
+boost::python::object GTransformWarp::getUp() {
+	auto pos = get<GTransform>()->Up();
+	return boost::python::make_tuple(pos.x, pos.y, pos.z);
+}
+
+void GTransformWarp::translate(boost::python::object o) {
+	float x = boost::python::extract<float>(o[0]);
+	float y = boost::python::extract<float>(o[1]);
+	float z = boost::python::extract<float>(o[2]);
+	get<GTransform>()->Translate(x, y, z);
+}
+
+boost::python::object GTransformWarp::getMethodList()
+{
+	boost::python::list l;
+	l.append("setPosition");
+	l.append("setEulerAngles");
+	l.append("setScale");
+	l.append("getPosition");
+	l.append("getEulerAngles");
+	l.append("getScale");
+	l.append("getForward");
+	l.append("getRight");
+	l.append("getUp");
+	return l;
+}
 
 std::string GTransformWarp::getMethodInfo(const std::string& method_name)
 {
@@ -321,30 +448,70 @@ std::string GTransformWarp::getMethodInfo(const std::string& method_name)
 	{
 /*
 {
+	"static":false,
 	"args":[
-		["FLOW",""],
-		["OBJECT","target"],
-		["FLOAT","x"],
-		["FLOAT","y"],
-		["FLOAT","z"]
+		{
+			"type":"flow"
+		},
+		{
+			"type":"GTransform",
+			"desc":"target"
+		},
+		{
+			"type":"float",
+			"desc":"x",
+			"value":"0.0"
+		},
+		{
+			"type":"float",
+			"desc":"y",
+			"value":"0.0"
+		},
+		{
+			"type":"float",
+			"desc":"z",
+			"value":"0.0"
+		}
 	],
 	"ret":[
-		["FLOW",""]
+		{
+			"type":"flow"
+		}
 	]
 }
 */
 		return "{\n"
+			"    \"static\":false,\n"
 			"	\"args\":[\n"
-			"		[\"FLOW\",\"\"],\n"
-			"		[\"OBJECT\",\"target\"],\n"
-			"		[\"FLOAT\",\"x\"],\n"
-			"		[\"FLOAT\",\"y\"],\n"
-			"		[\"FLOAT\",\"z\"]\n"
+			"		{\n"
+			"			\"type\":\"flow\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"GTransform\",\n"
+			"			\"desc\":\"target\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"float\",\n"
+			"			\"desc\":\"x\",\n"
+			"			\"value\":\"0.0\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"float\",\n"
+			"			\"desc\":\"y\",\n"
+			"			\"value\":\"0.0\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"float\",\n"
+			"			\"desc\":\"z\",\n"
+			"			\"value\":\"0.0\"\n"
+			"		}\n"
 			"	],\n"
 			"	\"ret\":[\n"
-			"		[\"FLOW\",\"\"]\n"
+			"		{\n"
+			"			\"type\":\"flow\"\n"
+			"		}\n"
 			"	]\n"
-			"}";
+			"}	";
 	}
 	if (method_name == "getPosition"
 		|| method_name == "getEulerAngles"
@@ -354,30 +521,72 @@ std::string GTransformWarp::getMethodInfo(const std::string& method_name)
 		|| method_name == "getUp") {
 /*
 {
+	"static":false,
 	"args":[
-		["FLOW",""],
-		["OBJECT","target"]
+		{
+			"type":"flow"
+		},
+		{
+			"type":"GTransform",
+			"desc":"target"
+		}
 	],
 	"ret":[
-		["FLOW",""],
-		["FLOAT","x"],
-		["FLOAT","y"],
-		["FLOAT","z"]
+		{
+			"type":"flow"
+		},
+		{
+			"type":"float",
+			"desc":"x",
+			"value":"0.0"
+		},
+		{
+			"type":"float",
+			"desc":"y",
+			"value":"0.0"
+		},
+		{
+			"type":"float",
+			"desc":"z",
+			"value":"0.0"
+		}
 	]
-}	
+}
 */
 		return "{\n"
-			"    \"args\":[\n"
-			"        [\"FLOW\",\"\"],\n"
-			"        [\"OBJECT\",\"target\"]\n"
-			"    ],\n"
-			"    \"ret\":[\n"
-			"        [\"FLOW\",\"\"],\n"
-			"        [\"FLOAT\",\"x\"],\n"
-			"        [\"FLOAT\",\"y\"],\n"
-			"        [\"FLOAT\",\"z\"]\n"
-			"    ]\n"
-			"}";
+			"    \"static\":false,\n"
+			"	\"args\":[\n"
+			"		{\n"
+			"			\"type\":\"flow\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"GTransform\",\n"
+			"			\"desc\":\"target\"\n"
+			"		}\n"
+			"	],\n"
+			"	\"ret\":[\n"
+			"		{\n"
+			"			\"type\":\"flow\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"float\",\n"
+			"			\"desc\":\"x\",\n"
+			"			\"value\":\"0.0\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"float\",\n"
+			"			\"desc\":\"y\",\n"
+			"			\"value\":\"0.0\"\n"
+			"		},\n"
+			"		{\n"
+			"			\"type\":\"float\",\n"
+			"			\"desc\":\"z\",\n"
+			"			\"value\":\"0.0\"\n"
+			"		}\n"
+			"	]\n"
+			"}	";
 	}
 	return "";
 }
+
+NS_G4Y_END

@@ -1,14 +1,16 @@
 #include <iostream>
-#include "GObj.h"
-#include "GCom.h"
-#include "GScene.h"
-#include "GTransform.h"
+#include "GObj.hpp"
+#include "GCom.hpp"
+#include "GScene.hpp"
+#include "GTransform.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/random_generator.hpp>
+
+NS_G4Y_BEGIN
 
 std::unordered_multimap<std::string, std::weak_ptr<GObj>> GObj::s_tagged_objs;
 std::vector<std::weak_ptr<GCom>>                          GObj::s_destroy_coms;
@@ -101,14 +103,14 @@ void GObj::DelChild(std::shared_ptr<GObj> obj)
 {
     m_children.erase(obj);
 }
-bool GObj::AddCom(p::object c) {
-	std::string type = p::extract<std::string>(c.attr("objType")());
+bool GObj::AddCom(boostpy::object c) {
+	std::string type = boostpy::extract<std::string>(c.attr("objType")());
 	if (type == "pyObj") {
 		// TODO ...
 		return false;
 	}
 	else if (type == "cppObj") {
-		GComWarp& com = p::extract<GComWarp&>(c);
+		GComWarp& com = boostpy::extract<GComWarp&>(c);
 		bool ret = AddCom(com.m_com);
 		if (ret) com.m_com->SetPyComRef(c);
 		return ret;
@@ -225,3 +227,5 @@ void GObj::AddDefaultComs()
 {
     AddCom(std::static_pointer_cast<GCom>(std::make_shared<GTransform>()));
 }
+
+NS_G4Y_END

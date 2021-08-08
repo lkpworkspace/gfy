@@ -1,9 +1,12 @@
-#include "GScene.h"
-#include "GObj.h"
-#include "GWorld.h"
-#include "GPhyWorld.h"
-#include "GOpenGLView.h"
-#include "GCom.h"
+#include "GScene.hpp"
+#include "GObj.hpp"
+#include "GWorld.hpp"
+#include "GPhyWorld.hpp"
+#include "GOpenGLView.hpp"
+#include "GCom.hpp"
+#include "GCamera.hpp"
+
+NS_G4Y_BEGIN
 
 GScene::GScene() :
     std::enable_shared_from_this<GScene>()
@@ -40,7 +43,6 @@ void GScene::ClearObjHelper(std::shared_ptr<GObj> obj)
     
     auto destroy_coms = obj->GetComs();
     for(auto begin = destroy_coms.begin(); begin != destroy_coms.end(); ++begin){
-        (*begin)->OnDestroy();
         (*begin)->Obj()->DelCom((*begin));
     }
 }
@@ -52,7 +54,6 @@ void GScene::ClearObjAndCom()
     auto& destroy_coms = GObj::s_destroy_coms;
     for(auto begin = destroy_coms.begin(); begin != destroy_coms.end(); ++begin){
         assert(!(*begin).expired());
-        (*begin).lock()->OnDestroy();
         (*begin).lock()->Obj()->DelCom((*begin).lock());
     }
     // 3. recursive call destroyed obj's coms OnDestroy
@@ -102,6 +103,8 @@ void GScene::Update()
     }
 
     // rendeing
+	phyworld->DebugDraw(GCamera::MainCamera()->Projection() * GCamera::MainCamera()->View());
+
     for(const auto& go : m_objs){
         go->UpdateRender();
     }
@@ -111,3 +114,5 @@ void GScene::Update()
     // clear destroy objs and coms
     ClearObjAndCom();
 }
+
+NS_G4Y_END

@@ -1,13 +1,16 @@
-#include "GMeshRenderer.hpp"
-#include "GMaterial.hpp"
-#include "GCamera.h"
-#include "GTransform.h"
-#include "GTexture.hpp"
-#include "GMesh.hpp"
-#include <GShader.hpp>
 #include <iostream>
 #include <glm/glm.hpp>
 #include <GL/glew.h>
+
+#include "GMeshRenderer.hpp"
+#include "GMaterial.hpp"
+#include "GCamera.hpp"
+#include "GTransform.hpp"
+#include "GTexture.hpp"
+#include "GMesh.hpp"
+#include "GShader.hpp"
+
+NS_G4Y_BEGIN
 
 void GMeshRenderer::Start()
 {
@@ -76,3 +79,5 @@ void GMeshRenderer::OnDestroy()
 {
 
 }
+
+NS_G4Y_END

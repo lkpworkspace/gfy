@@ -1,11 +1,12 @@
-#include "GResourceMgr.h"
-#include "GWorld.h"
+#include "GResourceMgr.hpp"
+#include "GWorld.hpp"
 #include "GShader.hpp"
 #include "GTexture.hpp"
 #include "GMesh.hpp"
 #include "GMeshRenderer.hpp"
-#include "GOpenGLView.h"
+#include "GOpenGLView.hpp"
 #include "GMaterial.hpp"
+#include "GLogger.hpp"
 
 static const char* VS_CODE = \
 "#version 330 core\n"
@@ -174,6 +175,8 @@ static const char* FS_CODE = \
 "    return (ambient + diffuse + specular);\n"
 "}";
 
+NS_G4Y_BEGIN
+
 GResourceMgr::GResourceMgr()
 {}
 
@@ -192,7 +195,7 @@ void GResourceMgr::Init(const boost::property_tree::ptree& cfg)
 
 	if (cfg.empty()) {
 		if (LoadShader("main_shader", VS_CODE, FS_CODE, false)) {
-			std::cout << "Load main shader success" << std::endl;
+			GLOG(GlogLevel::GLOG_INFO, "Load main shader success");
 		}
 	}
 	else {
@@ -488,7 +491,7 @@ void GResourceMgr::Test()
 }
 
 
-
+NS_G4Y_END
 
 
 

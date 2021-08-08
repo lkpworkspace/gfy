@@ -1,8 +1,8 @@
-#include "GCube.h"
+#include "GCube.hpp"
 #include "GShader.hpp"
-#include "GObj.h"
-#include "GCamera.h"
-#include "GTransform.h"
+#include "GObj.hpp"
+#include "GCamera.hpp"
+#include "GTransform.hpp"
 
 #include <GL/glew.h>
 
@@ -75,6 +75,8 @@ float vertices[] = {
     -0.5f,  0.5f, -0.5f,
 };
 
+NS_G4Y_BEGIN
+
 GCube::GCube() :
     color(1, 1, 1, 1)
 {}
@@ -114,17 +116,20 @@ void GCube::OnRender()
     glm::mat4 V = m_camera.lock()->View();
     glm::mat4 M = m_transform.lock()->ToMat4();
 
+	glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
     m_shader->Use();
     m_shader->SetUniform("color", color);
     m_shader->SetUniform("projection", P);
     m_shader->SetUniform("view", V);
     m_shader->SetUniform("model", M);
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
+	glDisable(GL_MULTISAMPLE);
 }
 
 void GCube::SetColor(glm::vec4 col)
@@ -137,3 +142,5 @@ void GCube::OnDestroy()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 }
+
+NS_G4Y_END

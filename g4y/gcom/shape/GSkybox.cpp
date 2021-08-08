@@ -1,8 +1,8 @@
-#include "GSkybox.h"
+#include "GSkybox.hpp"
 #include "GShader.hpp"
-#include "GObj.h"
-#include "GCamera.h"
-#include "GTransform.h"
+#include "GObj.hpp"
+#include "GCamera.hpp"
+#include "GTransform.hpp"
 
 #include <iostream>
 #include <GL/glew.h>
@@ -80,6 +80,8 @@ static float skybox_vertices[] = {
     500.0f, -500.0f,  500.0f
 };
 
+NS_G4Y_BEGIN
+
 void GSkybox::LoadCubemap()
 {
     unsigned int texture_id;
@@ -152,3 +154,5 @@ void GSkybox::OnDestroy()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 }
+
+NS_G4Y_END

@@ -1,8 +1,8 @@
-#include "GAxis.h"
+#include "GAxis.hpp"
 #include "GShader.hpp"
-#include "GObj.h"
-#include "GCamera.h"
-#include "GTransform.h"
+#include "GObj.hpp"
+#include "GCamera.hpp"
+#include "GTransform.hpp"
 
 #include <GL/glew.h>
 
@@ -40,6 +40,8 @@ static float line_vertices[] = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 };
+
+NS_G4Y_BEGIN
 
 void GAxis::Start()
 {
@@ -80,14 +82,17 @@ void GAxis::OnRender()
     m_shader->SetUniform("view", V);
     m_shader->SetUniform("model", M);
 
+	glEnable(GL_MULTISAMPLE);
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH,GL_NICEST);
-    glLineWidth(1);
+    glLineWidth(2);
 
     glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
     glDrawArrays(GL_LINES, 0, sizeof(line_vertices));
 
+	glLineWidth(1);
     glDisable(GL_LINE_SMOOTH);
+	glDisable(GL_MULTISAMPLE);
 }
 
 void GAxis::OnDestroy() 
@@ -95,3 +100,5 @@ void GAxis::OnDestroy()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 }
+
+NS_G4Y_END

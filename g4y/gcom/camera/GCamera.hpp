@@ -1,7 +1,10 @@
 #ifndef __GCAMERA_H__
 #define __GCAMERA_H__
-#include "GCom.h"
 #include <glm/glm.hpp>
+
+#include "GCom.hpp"
+
+NS_G4Y_BEGIN
 
 class GTransform;
 class G4Y_DLL GCamera : public GCom
@@ -29,6 +32,9 @@ public:
 
     glm::mat4 Projection();
     glm::mat4 View();
+
+	static GCamera* MainCamera() { return s_main_camera; }
+
 private:
     // 摄像机的指向向量 = glm::normalize(position - target);
     bool orthographic;
@@ -45,6 +51,10 @@ private:
     float h;
 
     std::weak_ptr<GTransform> m_transform;
+
+	static GCamera* s_main_camera;
 };
+
+NS_G4Y_END
 
 #endif

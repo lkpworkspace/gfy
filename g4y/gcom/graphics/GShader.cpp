@@ -3,6 +3,9 @@
 #include <sstream>
 #include <iostream>
 #include <GL/glew.h>
+
+NS_G4Y_BEGIN
+
 GShader::GShader(const std::string &vs, const std::string &fs, bool filepath)
 {
     m_valid = false;
@@ -155,3 +158,5 @@ void GShader::SetUniform(const std::string &name, glm::mat4& mat) const
 {
     glUniformMatrix4fv(glGetUniformLocation(m_id, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
+
+NS_G4Y_END

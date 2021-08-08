@@ -1,4 +1,3 @@
-#include "GWorld.h"
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -6,10 +5,13 @@
 #include <boost/system/error_code.hpp>
 #include <boost/filesystem.hpp>
 
-#include "GScene.h"
-#include "GPhyWorld.h"
-#include "GOpenGLView.h"
-#include "GResourceMgr.h"
+#include "GWorld.hpp"
+#include "GScene.hpp"
+#include "GPhyWorld.hpp"
+#include "GOpenGLView.hpp"
+#include "GResourceMgr.hpp"
+
+NS_G4Y_BEGIN
 
 GWorld* GWorld::s_instance = nullptr;
 
@@ -43,7 +45,7 @@ void GWorld::Init(int argc, char** argv)
 			pt::read_json(argv[1], m_json_cfg);
 		}
 		else {
-			pt::read_json("../config.json", m_json_cfg);
+			pt::read_json("config.json", m_json_cfg);
 		}
 	}
 	catch (const std::exception&)
@@ -56,6 +58,7 @@ void GWorld::Init(int argc, char** argv)
 	try
 	{
 		m_assets_path = m_json_cfg.get<std::string>("assets_path", "../assets/");
+		std::cout << "Assets floder: " << m_assets_path << std::endl;
 		item = m_json_cfg.get_child("GOpenGLView");
 	}
 	catch (std::exception &e)
@@ -135,3 +138,5 @@ void GWorld::SetScene(std::shared_ptr<GScene> s)
     m_scene = s;
     s->m_cur_scene = s;
 }
+
+NS_G4Y_END

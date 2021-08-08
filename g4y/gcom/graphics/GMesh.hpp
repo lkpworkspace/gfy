@@ -3,6 +3,10 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#include "GConfig.hpp"
+
+NS_G4Y_BEGIN
+
 struct GVertex {
     glm::vec3 position;
     glm::vec3 normal;
@@ -39,5 +43,7 @@ private:
 
     unsigned int              VBO, EBO;
 };
+
+NS_G4Y_END
 
 #endif

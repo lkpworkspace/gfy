@@ -1,7 +1,8 @@
-#include "GGrid.h"
+#include "GGrid.hpp"
 #include "GShader.hpp"
-#include "GObj.h"
-#include "GCamera.h"
+#include "GObj.hpp"
+#include "GCamera.hpp"
+#include "GTransform.hpp"
 
 #include <GL/glew.h>
 
@@ -9,6 +10,7 @@ static const char* vs_code = \
 "#version 330 core\n"
 "layout (location = 0) in vec2 pos;\n"
 "uniform vec4 color;\n"
+"uniform vec3 camera_pos;\n"
 "\n"
 "uniform mat4 model;\n"
 "uniform mat4 view;\n"
@@ -18,7 +20,8 @@ static const char* vs_code = \
 "void main()\n"
 "{\n"
 "    gl_Position = projection * view * model * vec4(pos.x, 0, pos.y, 1.0);\n"
-"    vcolor = color;\n"
+"	 float distance = length(camera_pos - vec3(pos.x, 0, pos.y));"
+"	 vcolor = color;\n"
 "}";
 
 static const char* fs_code = \
@@ -27,8 +30,12 @@ static const char* fs_code = \
 "out vec4 FragColor;\n"
 "void main()\n"
 "{\n"
+"	if(vcolor.a < 0.1)\n"
+"		discard;\n"
 "   FragColor = vcolor;\n"
 "}";
+
+NS_G4Y_BEGIN
 
 GGrid::GGrid(int begin, int end, int step) :
     m_begin(begin),
@@ -65,8 +72,9 @@ void GGrid::CreateGridArr()
 void GGrid::Init()
 {
     CreateGridArr();
-    
-    m_camera = std::static_pointer_cast<GCamera>(Obj()->FindWithTag("GCamera")->GetCom<GCamera>());
+    m_camera = Obj()->FindWithTag("GCamera")->GetCom<GCamera>();
+	m_camera_trans = Obj()->FindWithTag("GCamera")->GetCom<GTransform>();
+
     // 编译加载编译shader
     m_shader = std::make_shared<GShader>(vs_code, fs_code, false);
 
@@ -76,7 +84,6 @@ void GGrid::Init()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, m_cnt * sizeof(float), m_arr.get(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
@@ -88,8 +95,6 @@ void GGrid::Init()
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
-
-
 }
 
 void GGrid::Update()
@@ -99,26 +104,35 @@ void GGrid::Update()
 
 void GGrid::OnRender()
 {
-    glm::vec4 color(1.0f, 1.0f, 1.0f, 0.1f);
+    glm::vec4 color(1.0f, 1.0f, 1.0f, 0.2f);
     glm::mat4 P = m_camera.lock()->Projection();
     glm::mat4 V = m_camera.lock()->View();
     glm::mat4 M = glm::mat4(1.0f);
 
+	// 计算摄像机离网格太远就不再绘制
+	// 获得相机位置,计算与绘制点的距离,距离大于100就设置颜色透明
+	auto camera_pos = m_camera_trans.lock()->Position();
+	//std::cout << "camera_pos: x " << camera_pos.x << ", y " << camera_pos.y << ", z" << camera_pos.z << std::endl;
+
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glBlendFunc(GL_ONE, GL_ONE);
+
     m_shader->Use();
+	m_shader->SetUniform("camera_pos", camera_pos);
     m_shader->SetUniform("color", color);
     m_shader->SetUniform("projection", P);
     m_shader->SetUniform("view", V);
     m_shader->SetUniform("model", M);
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glShadeModel(GL_SMOOTH);
-
-    glEnable(GL_BLEND);
-
-    glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-    glDrawArrays(GL_LINES, 0, m_cnt);
+    glBindVertexArray(VAO);
+	glDrawArrays(GL_LINES, 0, m_cnt);
 
     glDisable(GL_BLEND);
+	//glDisable(GL_DEPTH_TEST);
+	glDisable(GL_MULTISAMPLE);
 }
 
 void GGrid::OnDestroy()
@@ -126,3 +140,5 @@ void GGrid::OnDestroy()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 }
+
+NS_G4Y_END

@@ -2,7 +2,10 @@
 #define __GSKYBOX_H__
 #include <string>
 #include <vector>
-#include "GCom.h"
+
+#include "GCom.hpp"
+
+NS_G4Y_BEGIN
 
 class GShader;
 class GCamera;
@@ -33,5 +36,7 @@ private:
     std::weak_ptr<GTransform>m_transform;
     std::vector<std::string> m_tex_path;
 };
+
+NS_G4Y_END
 
 #endif

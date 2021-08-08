@@ -1,34 +1,10 @@
-#include "G4Y.h"
+#include "G4Y.hpp"
 
-namespace g4y
-{
-	double gettime()
-    {
-        return GWorld::GetTime();
-    }
+NS_G4Y_BEGIN
 
-	double getdeltatime()
-    {
-        return GWorld::GetDeltaTime();
-    }
+	std::string G4Y::Version()
+	{
+		return "v0.2";
+	}
 
-    std::shared_ptr<GScene> curscene()
-    {
-        return GScene::CurScene();
-    }
-
-    std::shared_ptr<GPhyWorld> phyworld()
-    {
-        return GWorld::Instance()->PhyWorld();
-    }
-
-    std::shared_ptr<GOpenGLView> glview()
-    {
-        return GWorld::Instance()->GLView();
-    }
-
-    std::shared_ptr<GResourceMgr> resourcemgr()
-    {
-        return GWorld::Instance()->ResourceMgr();
-    }
-}
+NS_G4Y_END

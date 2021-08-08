@@ -2,6 +2,10 @@
 #define __GMATERIAL_HPP__
 #include <memory>
 
+#include "GConfig.hpp"
+
+NS_G4Y_BEGIN
+
 class GShader;
 class GTexture;
 class GMaterial
@@ -23,5 +27,7 @@ public:
     std::weak_ptr<GShader>    shader;
     std::weak_ptr<GTexture>   texture;
 };
+
+NS_G4Y_END
 
 #endif

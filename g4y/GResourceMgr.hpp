@@ -3,8 +3,12 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <boost/property_tree/ptree.hpp>
+
 #include "GConfig.hpp"
-#include "GCommon.h"
+#include "GCommon.hpp"
+
+NS_G4Y_BEGIN
 
 class GMesh;
 class GTexture;
@@ -26,13 +30,14 @@ struct G4Y_DLL GModelNodeInfo
 
 class GObj;
 class GShader;
+using boost::property_tree::ptree;
 class G4Y_DLL GResourceMgr
 {
 public:
     GResourceMgr();
     ~GResourceMgr();
 
-	void Init(const boost::property_tree::ptree& cfg);
+	void Init(const ptree& cfg);
 
     /* shader管理 */
     bool LoadShader(std::string name, std::string vs, std::string fs, bool str = true);
@@ -63,5 +68,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<GShader>>         m_shaders;
     std::unordered_map<std::string, std::shared_ptr<GTexture>>        m_textures;
 };
+
+NS_G4Y_END
 
 #endif

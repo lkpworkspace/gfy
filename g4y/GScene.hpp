@@ -3,7 +3,11 @@
 #include <memory>
 #include <queue>
 #include <unordered_set>
+
 #include "GConfig.hpp"
+
+NS_G4Y_BEGIN
+
 class GObj;
 class GWorld;
 class GOpenGLView;
@@ -30,6 +34,8 @@ private:
     std::unordered_set<std::shared_ptr<GObj>> m_objs;
 	static std::weak_ptr<GScene>              m_cur_scene;
 };
+
+NS_G4Y_END
 
 #endif
 

@@ -1,20 +1,28 @@
 #ifndef __GRIGIBODY_H__
 #define __GRIGIBODY_H__
-#include "GCollider.h"
+#include <set>
+
+#include "GPhysics.hpp"
 
 class btRigidBody;
 class btCollisionObject;
+
+NS_G4Y_BEGIN
+
 class GTransform;
 class GPhyWorld;
-
 struct G4Y_DLL GRigidBodyDes final
 {
-	float mass; //Note: mass equals zero means static, default 1
-	glm::vec3 local_inertia; //default (0, 0, 0)
-	std::weak_ptr<GCollider> shape;
-	bool          disable_sleep; //it is always active if disabled
+	/* Note: mass equals zero means static, default 1 */
+	float                           mass;
+	/* default (0, 0, 0) */
+	glm::vec3                       local_inertia; 
+	/* it is always active if disabled */
+	bool                            disable_sleep;
 
-	explicit GRigidBodyDes(std::shared_ptr<GCollider> c)
+	std::shared_ptr<GPhyShape>      shape;
+
+	explicit GRigidBodyDes(std::shared_ptr<GPhyShape> c)
 		: mass(1.f)
 		, local_inertia(0.f, 0.f, 0.f)
 		, disable_sleep(true)
@@ -31,48 +39,45 @@ struct G4Y_DLL GRigidBodyDes final
 		mass = o.mass;
 		local_inertia = o.local_inertia;
 		disable_sleep = o.disable_sleep;
-		shape = o.shape.lock();
+		shape = o.shape;
 		return *this;
 	}
 };
 
-class G4Y_DLL GRigibody final : public GCom
+class G4Y_DLL GRigibody final : public g4y::GPhyObj
 {
 	friend class GPhyWorld;
     G_COM
 public:
 	explicit GRigibody(GRigidBodyDes& des);
-	explicit GRigibody(std::shared_ptr<GCollider> c);
 
-    virtual void Init() override;
-
-    virtual void Start() override;
+	virtual void Init() override;
 
 	virtual void OnDestroy() override;
 
-    void OnCollision(const btCollisionObject* col_obj);
+	/** Set kinematic object. */
+	void SetKinematic(bool kinematic);
 
-    void OnCollisionEnd();
+	/** Check rigid body is kinematic object. */
+	bool IsKinematic() const;
 
     std::weak_ptr<GPhyWorld>              m_phy_world;
     std::weak_ptr<GTransform>             m_transform;
-    btRigidBody*                          m_rigidbody;
 
-    std::set<const btCollisionObject*>          m_last_cols;
-    std::set<const btCollisionObject*>          m_cur_cols;
-
-private:
    /**
      * synchronize node transformation to physics
      */
-    void SyncNodeToPhysics();
+    virtual void SyncNodeToPhysics() override;
     
     /**
      * synchronize physics transformation to node
      */
-    void SyncPhysicsToNode();
+    virtual void SyncPhysicsToNode() override;
+private:
 
 	GRigidBodyDes m_des;
 };
+
+NS_G4Y_END
 
 #endif

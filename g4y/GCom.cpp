@@ -1,6 +1,8 @@
-#include "GCom.h"
-#include "GObj.h"
-#include "GWorld.h"
+#include "GCom.hpp"
+#include "GObj.hpp"
+#include "GWorld.hpp"
+
+NS_G4Y_BEGIN
 
 GCom::GCom() :
     m_start(false),
@@ -17,3 +19,5 @@ void GCom::OnStart()
         Start();
     }
 }
+
+NS_G4Y_END

@@ -3,6 +3,10 @@
 #include <string>
 #include <glm/glm.hpp>
 
+#include "GConfig.hpp"
+
+NS_G4Y_BEGIN
+
 class GShader
 {
 public:
@@ -34,5 +38,7 @@ private:
     unsigned int m_id;
     bool         m_valid;
 };
+
+NS_G4Y_END
 
 #endif

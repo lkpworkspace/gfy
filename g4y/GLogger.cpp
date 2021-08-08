@@ -1,4 +1,4 @@
-#include "GLog.h"
+#include "GLogger.hpp"
 #include <cstddef>
 #include <string>
 #include <ostream>
@@ -33,12 +33,14 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", logging::trivial::severity_lev
 BOOST_LOG_ATTRIBUTE_KEYWORD(scope, "Scope", attrs::named_scope::value_type)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timeline, "Timeline", attrs::timer::value_type)
 
-GLog::GLog()
+NS_G4Y_BEGIN
+
+GLogger::GLogger()
 {
     Init();
 }
 
-void GLog::Init()
+void GLogger::Init()
 {
     // Setup the common formatter for all sinks
     logging::formatter fmt = expr::stream
@@ -76,4 +78,11 @@ void GLog::Init()
     logging::core::get()->add_global_attribute("Scope", attrs::named_scope());
 }
 
-GLog g_log;
+GLogger g_log;
+
+void GLogger::Log(std::string msg, GlogLevel lv, std::string file, std::string function, int line)
+{
+	std::cout << msg << std::endl;
+}
+
+NS_G4Y_END

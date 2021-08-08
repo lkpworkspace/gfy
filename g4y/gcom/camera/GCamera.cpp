@@ -1,6 +1,10 @@
-#include "GCamera.h"
-#include "GObj.h"
-#include "GTransform.h"
+#include "GCamera.hpp"
+#include "GObj.hpp"
+#include "GTransform.hpp"
+
+NS_G4Y_BEGIN
+
+GCamera* GCamera::s_main_camera = nullptr;
 
 GCamera::GCamera() :
     orthographic(false),
@@ -12,7 +16,9 @@ GCamera::GCamera() :
     y(0.0f),
     w(800.0f),
     h(600.0f)
-{}
+{
+	s_main_camera = this;
+}
 
 GCamera::~GCamera()
 {}
@@ -46,3 +52,5 @@ glm::mat4 GCamera::View()
 
     return glm::mat4_cast(glm::inverse(q)) * translate;
 }
+
+NS_G4Y_END

@@ -3,15 +3,20 @@
 #include <string>
 #include <memory>
 #include <typeinfo>
+
 #include "GConfig.hpp"
-#include "GObj.h"
+#include "GObj.hpp"
 
 #define G_COM \
 public: \
 virtual std::string TypeName() { return typeid(*this).name(); }
 
+NS_G4Y_BEGIN
+
 class GObj;
 class GPhyWorld;
+class GPhyObj;
+class GPhyCollisionInfo;
 class G4Y_DLL GCom
 {
 	G_COM
@@ -26,13 +31,13 @@ public:
     /* 在场景循环前被调用一次,随后不再别调用 */
     virtual void Start(){}
 
-    virtual void OnCollisionEnter(){};
-    virtual void OnCollisionStay(){};
-    virtual void OnCollisionExit(){};
+    virtual void OnCollisionEnter(const GPhyCollisionInfo*){};
+    virtual void OnCollisionStay(const GPhyCollisionInfo*){};
+    virtual void OnCollisionExit(GPhyObj*){};
 
-    virtual void OnTriggerEnter(){};
-    virtual void OnTriggerStay(){};
-    virtual void OnTriggerExit(){};
+    virtual void OnTriggerEnter(const GPhyCollisionInfo*){};
+    virtual void OnTriggerStay(const GPhyCollisionInfo*){};
+    virtual void OnTriggerExit(GPhyObj*){};
 
     /* 每一帧更新都会被调用 */
     virtual void Update(){}
@@ -68,7 +73,7 @@ private:
 	boost::python::object    m_pycom;
 };
 
-class GComWarp
+class G4Y_DLL GComWarp
 {
 public:
 	template<typename T>
@@ -80,9 +85,9 @@ public:
 		return "cppObj";
 	}
 
-	virtual std::string getMethodInfo(const std::string&) { return ""; };
-
 	std::shared_ptr<GCom> m_com;
 };
+
+NS_G4Y_END
 
 #endif

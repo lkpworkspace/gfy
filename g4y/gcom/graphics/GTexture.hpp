@@ -3,6 +3,10 @@
 #include <string>
 #include <GL/glew.h>
 
+#include "GConfig.hpp"
+
+NS_G4Y_BEGIN
+
 class GTexture
 {
 public:
@@ -18,5 +22,7 @@ public:
     std::string       m_type;
     std::string       m_path;
 };
+
+NS_G4Y_END
 
 #endif

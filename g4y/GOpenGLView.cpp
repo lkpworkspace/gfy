@@ -1,5 +1,3 @@
-#include "GOpenGLView.h"
-
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -10,12 +8,32 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
+#include "GOpenGLView.hpp"
 #include "GShader.hpp"
-#include "GWorld.h"
-#include "GResourceMgr.h"
+#include "GWorld.hpp"
+#include "GResourceMgr.hpp"
+
+NS_G4Y_BEGIN
+
+void GOpenGLView::LoadConf(const boost::property_tree::ptree& cfg)
+{
+	if (cfg.empty()) return;
+	m_app_title = cfg.get("app_title", m_app_title);
+	m_window_width = cfg.get("window_width", m_window_width);
+	m_window_height = cfg.get("window_height", m_window_height);
+	m_window_pos_x = cfg.get("window_pos_x", m_window_pos_x);
+	m_window_pos_y = cfg.get("window_pos_y", m_window_pos_y);
+	m_window_resize = cfg.get("window_resize", m_window_resize);
+	m_fullscreen = cfg.get("fullscreen", m_fullscreen);
+	m_maximized = cfg.get("maximized", m_maximized);
+	m_font_path = cfg.get("font_name", m_font_path);
+	m_font_size = cfg.get("font_size", m_font_size);
+}
 
 int GOpenGLView::Init(const boost::property_tree::ptree& cfg)
 {
+	LoadConf(cfg);
+
 	// init sdl2
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) < 0) {
 		std::cout << "Failed to initialize SDL2" << std::endl;
@@ -25,8 +43,8 @@ int GOpenGLView::Init(const boost::property_tree::ptree& cfg)
 		std::cout << "Initialized SDL2" << std::endl;
 
 	// load window size
-	short wndWidth = 1920, wndHeight = 1080, wndPosX = 100, wndPosY = 100;
-	bool fullscreen = false, maximized = false;
+	short wndWidth = m_window_width, wndHeight = m_window_height, wndPosX = m_window_pos_x, wndPosY = m_window_pos_y;
+	bool fullscreen = m_fullscreen, maximized = m_maximized;
 
 	// clamp to desktop size
 	SDL_DisplayMode desk;
@@ -40,20 +58,21 @@ int GOpenGLView::Init(const boost::property_tree::ptree& cfg)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); // double buffering
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
+	Uint32 win_flag = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
+	if (m_window_resize) win_flag |= SDL_WINDOW_RESIZABLE;
 	// open window
-	m_wnd = SDL_CreateWindow("G4Y",
+	m_wnd = SDL_CreateWindow(m_app_title.c_str(),
 		(wndPosX == -1) ? SDL_WINDOWPOS_CENTERED : wndPosX,
 		(wndPosY == -1) ? SDL_WINDOWPOS_CENTERED : wndPosY,
 		wndWidth, wndHeight,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+		win_flag);
 
 	SDL_SetWindowMinimumSize(m_wnd, 200, 200);
 
-	if (maximized)
-		SDL_MaximizeWindow(m_wnd);
-	if (fullscreen)
-		SDL_SetWindowFullscreen(m_wnd, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	if (maximized) SDL_MaximizeWindow(m_wnd);
+	if (fullscreen) SDL_SetWindowFullscreen(m_wnd, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
 	// get GL context
 	m_glContext = SDL_GL_CreateContext(m_wnd);
@@ -74,7 +93,9 @@ int GOpenGLView::Init(const boost::property_tree::ptree& cfg)
 	ImGui::CreateContext();
 
 	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->AddFontDefault();
+	//io.Fonts->AddFontDefault();
+	SetFont();
+
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard
 		| ImGuiConfigFlags_NoMouseCursorChange
 		| ImGuiConfigFlags_DockingEnable
@@ -87,7 +108,8 @@ int GOpenGLView::Init(const boost::property_tree::ptree& cfg)
 	ImGui_ImplOpenGL3_Init("#version 330");
 	ImGui_ImplSDL2_InitForOpenGL(m_wnd, m_glContext);
 
-	ImGui::StyleColorsDark();
+	ImGui::StyleColorsClassic();
+	//ImGui::StyleColorsDark();
 
 	// dpi
 	float dpi = 0.0f;
@@ -95,6 +117,30 @@ int GOpenGLView::Init(const boost::property_tree::ptree& cfg)
 	SDL_GetDisplayDPI(wndDisplayIndex, &dpi, NULL, NULL);
 	std::cout << std::to_string(dpi) + " dpi" << std::endl;
 	return 0;
+}
+
+void GOpenGLView::SetFont()
+{
+	if (m_font_path.empty()) return;
+	auto full_path = GWorld::Instance()->GetAssetpath() + m_font_path;
+
+	ImFontAtlas* fonts = ImGui::GetIO().Fonts;
+	fonts->Clear();
+
+	ImFontConfig config;
+	config.MergeMode = false;
+	config.OversampleH = 1;
+	config.GlyphOffset = ImVec2(0, -1);
+
+	ImFont* font = fonts->AddFontFromFileTTF(full_path.c_str(), m_font_size, &config, fonts->GetGlyphRangesChineseFull());
+	if (font == nullptr) {
+		fonts->Clear();
+		fonts->AddFontDefault();
+	}
+	fonts->Build();
+
+	ImGui_ImplOpenGL3_DestroyFontsTexture();
+	ImGui_ImplOpenGL3_CreateFontsTexture();
 }
 
 std::shared_ptr<GShader> GOpenGLView::GetShader()
@@ -198,3 +244,5 @@ void GOpenGLView::Exit()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
 }
+
+NS_G4Y_END

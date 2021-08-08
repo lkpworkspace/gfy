@@ -1,6 +1,8 @@
 #include "GMesh.hpp"
 #include <GL/glew.h>
 
+NS_G4Y_BEGIN
+
 GMesh::GMesh(std::vector<GVertex> vertices, std::vector<unsigned int> indices)
 {
     this->m_vertices = vertices;
@@ -53,3 +55,5 @@ void GMesh::SetupMesh()
 
     glBindVertexArray(0);
 }
+
+NS_G4Y_END

@@ -1,79 +1,67 @@
-#include "GCollider.h"
-#include "GCommon.h"
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
-/*
-    Collider中OnCollision函数：
-        由碰撞调用此函数，该函数处理碰撞，并将碰撞结果分发给该对象的的其他组件。
-        
-    派生类中：
-        在Init函数中创建公共对象
-            碰撞形状
-            transform
-            phy_world
-        在Start函数中
-            判断是否含有Rigibody组件
-                有，不做任何事
-                没有， 就创建一个碰撞对象加入物理世界
-*/
+#include "GCollider.hpp"
+#include "GCommon.hpp"
+#include "GTransform.hpp"
+#include "GWorld.hpp"
+#include "GPhyWorld.hpp"
 
-void GCollider::OnCollision(const btCollisionObject* col_obj)
+NS_G4Y_BEGIN
+
+GCollider::GCollider(GColliderDes& des)
+	: GPhyObj(GPhyObj::PhyObjType::COLLIDER)
+	, m_des(des)
+{}
+
+void GCollider::Init()
 {
-    // 判断该对象是否存在与上一次的碰撞，
-    //  如果存在就调用OnCollisionStay函数
-    //  如果不存在就调用OnCollisionEnter函数
-    // 将碰撞对象加入到当前hash表中
-    bool is_trigger = (m_col_obj->getCollisionFlags() == btCollisionObject::CF_NO_CONTACT_RESPONSE);
-    bool col_obj_exist = (m_last_cols.find(col_obj) != m_last_cols.end());
-    // 获得所有组件并调用碰撞消息
-    auto coms = Obj()->GetComs();
-    for(const auto& c : coms){
-        if(col_obj_exist){
-            if(!is_trigger)
-                c->OnCollisionStay();
-            else
-                c->OnTriggerStay();
-        }else{
-            if(!is_trigger)
-                c->OnCollisionEnter();
-            else
-                c->OnTriggerEnter();
-        }
-    }
-    m_cur_cols.insert(col_obj);
+	m_phy_world = GWorld::Instance()->PhyWorld();
+
+	auto ghost_obj = std::make_shared<btGhostObject>();
+	m_col_obj = std::static_pointer_cast<btCollisionObject>(ghost_obj);
+
+	ghost_obj->setCollisionShape(m_des.shape->GetbtShape());
+	ghost_obj->setUserPointer(this);
+	SetTrigger(m_des.is_trigger);
+
+	m_phy_world.lock()->AddPhyObj(this);
+
+	auto trans = GetCom<GTransform>();
+	m_transform = trans;
 }
 
-void GCollider::OnCollisionEnd()
+void GCollider::OnDestroy()
 {
-    // 遍历上一次碰撞对象中 在这一次中是否存在
-    // 如果存在，说明碰撞没有离开
-    // 如果不存在， 则说明碰撞对象离开，调用OnCollisionExit函数， 并删除该对象
-    // 将这一次的对象加入到上一次的hash表中，并去重复
-    // 清空当前hash表
-    bool is_trigger = (m_col_obj->getCollisionFlags() == btCollisionObject::CF_NO_CONTACT_RESPONSE);
-    auto coms = Obj()->GetComs();
-    for(auto begin = m_last_cols.begin(); begin != m_last_cols.end(); ){
-        if(m_cur_cols.find(*begin) == m_cur_cols.end()){
-            for(const auto& c : coms){
-                if(!is_trigger)
-                    c->OnCollisionExit();
-                else
-                    c->OnTriggerExit();
-            }
-            begin = m_last_cols.erase(begin);
-        }else{
-            ++begin;
-        }
-    }
-    m_last_cols.insert(m_cur_cols.begin(), m_cur_cols.end());
-    m_cur_cols.clear();
+	m_phy_world.lock()->DelPhyObj(this);
 }
 
-void GCollider::SetPostion(glm::vec3 pos)
+void GCollider::SetTrigger(bool is_trigger)
 {
-	if (m_col_obj != nullptr) {
-		btTransform trans = m_col_obj->getWorldTransform();
-		trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
-		m_col_obj->setWorldTransform(trans);
-	}
+	m_col_obj->setCollisionFlags(is_trigger == true ?
+		m_col_obj->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE :
+		m_col_obj->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
 }
+
+void GCollider::SyncNodeToPhysics()
+{
+	btTransform trans;
+	auto p = m_transform.lock()->Position();
+	auto q = m_transform.lock()->Rotation();
+	trans.setOrigin(btVector3(p.x, p.y, p.z));
+	trans.setRotation(btQuaternion(q.x, q.y, q.z, q.w));
+
+	m_col_obj->setWorldTransform(trans);
+}
+
+
+void GCollider::SyncPhysicsToNode()
+{
+	btTransform trans = m_col_obj->getWorldTransform();;
+	btScalar rx, ry, rz;
+	trans.getRotation().getEulerZYX(rz, ry, rx);
+	m_transform.lock()->SetPosition(glm::vec3(trans.getOrigin().x(), trans.getOrigin().y(), trans.getOrigin().z()));
+	m_transform.lock()->SetRotation(glm::vec3(rx, ry, rz));
+}
+
+NS_G4Y_END

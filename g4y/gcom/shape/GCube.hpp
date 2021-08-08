@@ -1,8 +1,10 @@
 #ifndef __GCUBE_H__
 #define __GCUBE_H__
-#include "GCom.h"
-
 #include <glm/glm.hpp>
+
+#include "GCom.hpp"
+
+NS_G4Y_BEGIN
 
 class GShader;
 class GCamera;
@@ -30,5 +32,7 @@ private:
     std::weak_ptr<GCamera>   m_camera;
     std::weak_ptr<GTransform>m_transform;
 };
+
+NS_G4Y_END
 
 #endif

@@ -7,9 +7,11 @@
 #include <typeinfo>
 
 #include <boost/python.hpp>
-namespace p = boost::python;
+namespace boostpy = boost::python;
 
 #include "GConfig.hpp"
+
+NS_G4Y_BEGIN
 
 class GCom;
 class G4Y_DLL GObj : public std::enable_shared_from_this<GObj>
@@ -30,7 +32,7 @@ public:
         if(c) return AddCom(c);
         return false;
     }
-	bool AddCom(p::object c);
+	bool AddCom(boostpy::object c);
     bool AddCom(std::shared_ptr<GCom> com);
 
 	template<typename T>
@@ -110,5 +112,7 @@ private:
     static std::vector<std::weak_ptr<GCom>>                          s_destroy_coms;
     static std::vector<std::weak_ptr<GObj>>                          s_destroy_objs;
 };
+
+NS_G4Y_END
 
 #endif
